@@ -140,7 +140,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby="photo-upload-description">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Add Photos for AI Analysis
@@ -149,6 +149,9 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
             </Button>
           </DialogTitle>
         </DialogHeader>
+        <div id="photo-upload-description" className="sr-only">
+          Upload photos of your storage contents for AI-powered item identification
+        </div>
         
         <div className="space-y-6">
           {/* Storage Unit Selection */}

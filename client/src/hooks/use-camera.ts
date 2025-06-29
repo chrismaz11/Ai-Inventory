@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -9,12 +9,12 @@ export function useCamera() {
   const [hasPermission, setHasPermission] = useState(false);
 
   // Check if camera is supported
-  useState(() => {
+  useEffect(() => {
     setIsSupported(
       'mediaDevices' in navigator && 
       'getUserMedia' in navigator.mediaDevices
     );
-  });
+  }, []);
 
   const startCamera = useCallback(async () => {
     if (!isSupported || !videoRef.current) {

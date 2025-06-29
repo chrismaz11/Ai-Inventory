@@ -13,10 +13,11 @@ import { scanQRCode } from "@/lib/qr-scanner";
 interface QRScannerProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: (storageUnitId: number) => void;
 }
 
-export default function QRScanner({ open, onClose }: QRScannerProps) {
-  const [manualEntry, setManualEntry] = useState(false);
+export default function QRScanner({ open, onClose, onSuccess }: QRScannerProps) {
+  const [manualEntry, setManualEntry] = useState(true); // Default to manual entry
   const [qrCode, setQrCode] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
@@ -51,12 +52,17 @@ export default function QRScanner({ open, onClose }: QRScannerProps) {
 
   useEffect(() => {
     if (storageUnit) {
+      const unit = storageUnit as any;
       toast({
         title: "Storage unit found",
-        description: `Accessing ${storageUnit.name}`,
+        description: `Found ${unit.name}`,
       });
-      setLocation(`/storage-units`);
-      onClose();
+      if (onSuccess) {
+        onSuccess(unit.id);
+      } else {
+        setLocation(`/storage-units`);
+        onClose();
+      }
     } else if (error && qrCode) {
       toast({
         title: "Storage unit not found",
@@ -64,7 +70,7 @@ export default function QRScanner({ open, onClose }: QRScannerProps) {
         variant: "destructive",
       });
     }
-  }, [storageUnit, error, qrCode]);
+  }, [storageUnit, error, qrCode, onSuccess, setLocation, onClose]);
 
   const startScanning = async () => {
     try {
@@ -166,7 +172,7 @@ export default function QRScanner({ open, onClose }: QRScannerProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby="qr-scanner-description">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Scan QR Code
@@ -175,6 +181,9 @@ export default function QRScanner({ open, onClose }: QRScannerProps) {
             </Button>
           </DialogTitle>
         </DialogHeader>
+        <div id="qr-scanner-description" className="sr-only">
+          Scan or enter a QR code to access your storage unit
+        </div>
         
         {manualEntry ? (
           <div className="space-y-4">
@@ -189,16 +198,37 @@ export default function QRScanner({ open, onClose }: QRScannerProps) {
               />
             </div>
             
+            {/* Test QR codes */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-blue-900 mb-2">Test QR Codes:</p>
+              <div className="space-y-1">
+                <button 
+                  onClick={() => setQrCode("SU-12345678")}
+                  className="block w-full text-left text-xs font-mono bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
+                >
+                  SU-12345678 (Living Room Storage Box)
+                </button>
+                <button 
+                  onClick={() => setQrCode("SU-87654321")}
+                  className="block w-full text-left text-xs font-mono bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
+                >
+                  SU-87654321 (Basement Storage A)
+                </button>
+              </div>
+            </div>
+            
             <div className="flex space-x-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setManualEntry(false)} 
-                className="flex-1"
-              >
-                Back to Camera
-              </Button>
-              <Button onClick={handleManualSubmit} className="flex-1">
-                Search
+              {isSupported && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setManualEntry(false)} 
+                  className="flex-1"
+                >
+                  Use Camera
+                </Button>
+              )}
+              <Button onClick={handleManualSubmit} className="flex-1" disabled={!qrCode.trim()}>
+                Scan Storage Unit
               </Button>
             </div>
           </div>
