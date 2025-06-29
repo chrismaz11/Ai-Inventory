@@ -22,13 +22,25 @@ export function useCamera() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment', // Prefer back camera for QR scanning
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }
-      });
+      // Try different camera configurations if the preferred one fails
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: 'environment', // Prefer back camera for QR scanning
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        });
+      } catch (envError) {
+        // Fallback to any available camera
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        });
+      }
 
       streamRef.current = stream;
       videoRef.current.srcObject = stream;

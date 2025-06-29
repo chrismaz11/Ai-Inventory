@@ -20,7 +20,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
   const [uploadProgress, setUploadProgress] = useState<string>("");
   const { toast } = useToast();
 
-  const { data: storageUnits = [] } = useQuery({
+  const { data: storageUnits = [] } = useQuery<any[]>({
     queryKey: ["/api/storage-units"],
   });
 

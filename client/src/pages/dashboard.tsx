@@ -24,7 +24,7 @@ import StorageUnitForm from "@/components/storage-unit-form";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
-  const [showQRScanner, setShowQRScanner] = useState(true); // Auto-open QR scanner
+  const [showQRScanner, setShowQRScanner] = useState(false); // Don't auto-open QR scanner
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [showCreateUnit, setShowCreateUnit] = useState(false);
   const [selectedStorageUnitId, setSelectedStorageUnitId] = useState<number | undefined>();
@@ -38,19 +38,23 @@ export default function Dashboard() {
     setShowPhotoUpload(true);
   };
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<{
+    totalStorageUnits: number;
+    totalItems: number;
+    lastActivity: any | null;
+  }>({
     queryKey: ["/api/stats"],
   });
 
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [] } = useQuery<any[]>({
     queryKey: ["/api/activities", { limit: 4 }],
   });
 
-  const { data: storageUnits = [] } = useQuery({
+  const { data: storageUnits = [] } = useQuery<any[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<any[]>({
     queryKey: ["/api/items", { search: searchQuery }],
     enabled: searchQuery.length > 0,
   });
