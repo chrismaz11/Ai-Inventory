@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,19 @@ import StorageUnitForm from "@/components/storage-unit-form";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
-  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(true); // Auto-open QR scanner
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [showCreateUnit, setShowCreateUnit] = useState(false);
+  const [selectedStorageUnitId, setSelectedStorageUnitId] = useState<number | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Handle QR scanner success - open photo upload for the scanned storage unit
+  const handleQRScanSuccess = (storageUnitId: number) => {
+    console.log("QR scan success for storage unit:", storageUnitId);
+    setSelectedStorageUnitId(storageUnitId);
+    setShowQRScanner(false);
+    setShowPhotoUpload(true);
+  };
 
   const { data: stats } = useQuery({
     queryKey: ["/api/stats"],
@@ -380,11 +389,16 @@ export default function Dashboard() {
       {/* Modals */}
       <QRScanner 
         open={showQRScanner} 
-        onClose={() => setShowQRScanner(false)} 
+        onClose={() => setShowQRScanner(false)}
+        onSuccess={handleQRScanSuccess}
       />
       <PhotoUpload 
         open={showPhotoUpload} 
-        onClose={() => setShowPhotoUpload(false)} 
+        onClose={() => {
+          setShowPhotoUpload(false);
+          setSelectedStorageUnitId(undefined);
+        }}
+        storageUnitId={selectedStorageUnitId}
       />
       <StorageUnitForm 
         open={showCreateUnit} 
