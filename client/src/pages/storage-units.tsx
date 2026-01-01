@@ -3,6 +3,21 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ArrowLeft, Plus, QrCode, Settings, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -13,6 +28,7 @@ import { formatDistanceToNow } from "date-fns";
 export default function StorageUnits() {
   const [showCreateUnit, setShowCreateUnit] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [unitToDelete, setUnitToDelete] = useState<any>(null);
   const { toast } = useToast();
 
   const { data: storageUnits = [], isLoading } = useQuery({
@@ -48,9 +64,10 @@ export default function StorageUnits() {
     return items.filter((item: any) => item.storageUnitId === unitId).length;
   };
 
-  const handleDelete = (unit: any) => {
-    if (confirm(`Are you sure you want to delete "${unit.name}"? This will also delete all items in this storage unit.`)) {
-      deleteUnitMutation.mutate(unit.id);
+  const confirmDelete = () => {
+    if (unitToDelete) {
+      deleteUnitMutation.mutate(unitToDelete.id);
+      setUnitToDelete(null);
     }
   };
 
@@ -171,14 +188,23 @@ export default function StorageUnits() {
                       <Settings size={14} className="mr-1" />
                       Edit
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleDelete(unit)}
-                      disabled={deleteUnitMutation.isPending}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUnitToDelete(unit)}
+                          disabled={deleteUnitMutation.isPending}
+                          aria-label={`Delete ${unit.name}`}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delete storage unit</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </CardContent>
               </Card>
@@ -210,6 +236,26 @@ export default function StorageUnits() {
           storageUnit={editingUnit}
         />
       )}
+
+      <AlertDialog open={!!unitToDelete} onOpenChange={(open) => !open && setUnitToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Storage Unit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{unitToDelete?.name}"? This action cannot be undone and will also delete all items in this storage unit.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
