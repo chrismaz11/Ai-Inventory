@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,13 @@ import {
   ChevronRight,
   Package
 } from "lucide-react";
-import QRScanner from "@/components/qr-scanner";
-import PhotoUpload from "@/components/photo-upload";
-import StorageUnitForm from "@/components/storage-unit-form";
 import { formatDistanceToNow } from "date-fns";
+import { useDebounce } from "@/hooks/use-debounce";
+
+// Lazy load heavy modal components
+const QRScanner = lazy(() => import("@/components/qr-scanner"));
+const PhotoUpload = lazy(() => import("@/components/photo-upload"));
+const StorageUnitForm = lazy(() => import("@/components/storage-unit-form"));
 
 export default function Dashboard() {
   const [showQRScanner, setShowQRScanner] = useState(false); // Don't auto-open QR scanner
@@ -29,6 +32,7 @@ export default function Dashboard() {
   const [showCreateUnit, setShowCreateUnit] = useState(false);
   const [selectedStorageUnitId, setSelectedStorageUnitId] = useState<number | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Handle QR scanner success - open photo upload for the scanned storage unit
   const handleQRScanSuccess = (storageUnitId: number) => {
@@ -55,8 +59,8 @@ export default function Dashboard() {
   });
 
   const { data: searchResults = [] } = useQuery<any[]>({
-    queryKey: ["/api/items", { search: searchQuery }],
-    enabled: searchQuery.length > 0,
+    queryKey: ["/api/items", { search: debouncedSearchQuery }],
+    enabled: debouncedSearchQuery.length > 0,
   });
 
   const popularCategories = ["Electronics", "Clothing", "Books", "Tools"];
@@ -391,23 +395,31 @@ export default function Dashboard() {
       </div>
 
       {/* Modals */}
-      <QRScanner 
-        open={showQRScanner} 
-        onClose={() => setShowQRScanner(false)}
-        onSuccess={handleQRScanSuccess}
-      />
-      <PhotoUpload 
-        open={showPhotoUpload} 
-        onClose={() => {
-          setShowPhotoUpload(false);
-          setSelectedStorageUnitId(undefined);
-        }}
-        storageUnitId={selectedStorageUnitId}
-      />
-      <StorageUnitForm 
-        open={showCreateUnit} 
-        onClose={() => setShowCreateUnit(false)} 
-      />
+      <Suspense fallback={null}>
+        {showQRScanner && (
+          <QRScanner
+            open={showQRScanner}
+            onClose={() => setShowQRScanner(false)}
+            onSuccess={handleQRScanSuccess}
+          />
+        )}
+        {showPhotoUpload && (
+          <PhotoUpload
+            open={showPhotoUpload}
+            onClose={() => {
+              setShowPhotoUpload(false);
+              setSelectedStorageUnitId(undefined);
+            }}
+            storageUnitId={selectedStorageUnitId}
+          />
+        )}
+        {showCreateUnit && (
+          <StorageUnitForm
+            open={showCreateUnit}
+            onClose={() => setShowCreateUnit(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
