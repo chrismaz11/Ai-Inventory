@@ -87,7 +87,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
     setSelectedFiles(validFiles);
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
     const files = Array.from(event.dataTransfer.files);
     const validFiles = files.filter(file => {
@@ -99,7 +99,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
     setSelectedFiles(validFiles);
   };
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
   };
 
@@ -144,7 +144,13 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Add Photos for AI Analysis
-            <Button variant="ghost" size="sm" onClick={handleClose} disabled={analyzeMutation.isPending}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              disabled={analyzeMutation.isPending}
+              aria-label="Close"
+            >
               <X size={16} />
             </Button>
           </DialogTitle>
@@ -180,15 +186,24 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
             <Label>Upload Photos</Label>
             
             {selectedFiles.length === 0 ? (
-              <div 
-                className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer"
-                onClick={() => document.getElementById('photo-input')?.click()}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-              >
-                <CloudUpload className="mx-auto mb-4 text-secondary" size={48} />
-                <p className="text-slate-700 font-medium mb-2">Drop photos here or click to browse</p>
-                <p className="text-sm text-secondary">Supports JPG, PNG, HEIC up to 10MB each</p>
+              <>
+                <button
+                  type="button"
+                  className="w-full border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById('photo-input')?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      document.getElementById('photo-input')?.click();
+                    }
+                  }}
+                >
+                  <CloudUpload className="mx-auto mb-4 text-secondary" size={48} />
+                  <p className="text-slate-700 font-medium mb-2">Drop photos here or click to browse</p>
+                  <p className="text-sm text-secondary">Supports JPG, PNG, HEIC up to 10MB each</p>
+                </button>
                 <input 
                   type="file" 
                   multiple 
@@ -198,7 +213,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
                   onChange={handleFileSelect}
                   disabled={analyzeMutation.isPending}
                 />
-              </div>
+              </>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -222,9 +237,10 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-auto p-1 opacity-0 group-hover:opacity-100"
+                          className="h-auto p-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
                           onClick={() => removeFile(index)}
                           disabled={analyzeMutation.isPending}
+                          aria-label={`Remove ${file.name}`}
                         >
                           <X size={12} />
                         </Button>
