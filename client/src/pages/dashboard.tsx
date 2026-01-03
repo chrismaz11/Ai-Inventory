@@ -93,7 +93,7 @@ export default function Dashboard() {
             </nav>
 
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" aria-label="Notifications">
                 <Bell size={18} />
               </Button>
               <div className="w-8 h-8 bg-slate-300 rounded-full flex items-center justify-center">
