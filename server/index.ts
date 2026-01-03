@@ -1,8 +1,28 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { rateLimit } from "./middleware/rateLimit";
 
 const app = express();
+app.set("trust proxy", 1); // Enable proxy trust for rate limiting
+
+// Rate limiting middleware
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later."
+});
+
+// Stricter rate limit for expensive AI operations
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP to 10 requests per hour
+  message: "Too many AI analysis requests, please try again later."
+});
+
+app.use("/api/analyze-photos", aiLimiter);
+app.use("/api", apiLimiter);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -43,8 +63,10 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // Log the full error to server console, but don't leak stack to client
+    console.error(`[Error] ${status} ${message}`, err);
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
