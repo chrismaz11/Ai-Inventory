@@ -287,9 +287,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error("Photo analysis error:", error);
+      // Security: Don't leak internal error details to the client
       res.status(500).json({ 
-        message: "Failed to analyze photos", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+        message: "Failed to analyze photos. Please try again later."
       });
     }
   });
