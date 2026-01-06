@@ -335,7 +335,11 @@ export default function Dashboard() {
                   <p className="text-center text-secondary py-8">No storage units yet</p>
                 ) : (
                   storageUnits.slice(0, 5).map((unit: any) => (
-                    <div key={unit.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
+                    <Link
+                      key={unit.id}
+                      href="/storage-units"
+                      className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors block"
+                    >
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                           <span className="text-white text-xs font-bold">
@@ -353,7 +357,7 @@ export default function Dashboard() {
                         </Badge>
                         <ChevronRight className="text-secondary" size={12} />
                       </div>
-                    </div>
+                    </Link>
                   ))
                 )}
               </CardContent>
