@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [showQRScanner, setShowQRScanner] = useState(false); // Don't auto-open QR scanner
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [showCreateUnit, setShowCreateUnit] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<any>(null);
   const [selectedStorageUnitId, setSelectedStorageUnitId] = useState<number | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -286,6 +287,7 @@ export default function Dashboard() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
+                      aria-label="Quick search items and storage units"
                     />
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
                   </div>
@@ -335,7 +337,12 @@ export default function Dashboard() {
                   <p className="text-center text-secondary py-8">No storage units yet</p>
                 ) : (
                   storageUnits.slice(0, 5).map((unit: any) => (
-                    <div key={unit.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
+                    <button
+                      key={unit.id}
+                      className="w-full text-left flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      onClick={() => setEditingUnit(unit)}
+                      aria-label={`Edit details for ${unit.name} at ${unit.location}`}
+                    >
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                           <span className="text-white text-xs font-bold">
@@ -353,7 +360,7 @@ export default function Dashboard() {
                         </Badge>
                         <ChevronRight className="text-secondary" size={12} />
                       </div>
-                    </div>
+                    </button>
                   ))
                 )}
               </CardContent>
@@ -417,6 +424,13 @@ export default function Dashboard() {
           <StorageUnitForm
             open={showCreateUnit}
             onClose={() => setShowCreateUnit(false)}
+          />
+        )}
+        {editingUnit && (
+          <StorageUnitForm
+            open={!!editingUnit}
+            onClose={() => setEditingUnit(null)}
+            storageUnit={editingUnit}
           />
         )}
       </Suspense>
