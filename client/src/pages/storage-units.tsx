@@ -176,6 +176,7 @@ export default function StorageUnits() {
                       size="sm" 
                       onClick={() => handleDelete(unit)}
                       disabled={deleteUnitMutation.isPending}
+                      aria-label={`Delete ${unit.name}`}
                     >
                       <Trash2 size={14} />
                     </Button>
