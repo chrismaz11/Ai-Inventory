@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertStorageUnitSchema, insertItemSchema, insertActivitySchema } from "@shared/schema";
 import { analyzeStoragePhoto, generateItemSummary } from "./services/openai";
 import { generateQRCode, validateQRCode, generateStorageUnitName } from "./services/qr";
+import { rateLimit } from "./middleware/rateLimit";
 import multer from "multer";
 import { z } from "zod";
 
@@ -207,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Photo Analysis route
-  app.post("/api/analyze-photos", upload.array('photos', 10), async (req, res) => {
+  app.post("/api/analyze-photos", rateLimit, upload.array('photos', 10), async (req, res) => {
     try {
       const { storageUnitId } = req.body;
       const files = req.files as Express.Multer.File[];
@@ -288,8 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Photo analysis error:", error);
       res.status(500).json({ 
-        message: "Failed to analyze photos", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+        message: "Failed to analyze photos. Please try again later."
       });
     }
   });
