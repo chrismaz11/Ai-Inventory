@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -25,7 +25,9 @@ export const items = pgTable("items", {
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  storageUnitIdIdx: index("items_storage_unit_id_idx").on(table.storageUnitId),
+}));
 
 export const activities = pgTable("activities", {
   id: serial("id").primaryKey(),
@@ -34,7 +36,9 @@ export const activities = pgTable("activities", {
   storageUnitId: integer("storage_unit_id").references(() => storageUnits.id),
   metadata: jsonb("metadata"), // additional data like item count, AI results
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  storageUnitIdIdx: index("activities_storage_unit_id_idx").on(table.storageUnitId),
+}));
 
 export const storageUnitsRelations = relations(storageUnits, ({ many }) => ({
   items: many(items),
