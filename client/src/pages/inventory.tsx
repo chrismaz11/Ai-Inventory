@@ -11,15 +11,15 @@ export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: items = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/items", { search: searchQuery }],
   });
 
-  const { data: storageUnits = [] } = useQuery({
+  const { data: storageUnits = [] } = useQuery<any[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const categories = [...new Set(items.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(items.map((item: any) => item.category).filter(Boolean)));
 
   const filteredItems = items.filter((item: any) => 
     !selectedCategory || item.category === selectedCategory
@@ -85,7 +85,7 @@ export default function Inventory() {
               >
                 All Items
               </Button>
-              {categories.map((category) => (
+              {categories.map((category: any) => (
                 <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}

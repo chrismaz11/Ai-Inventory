@@ -20,7 +20,7 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<any[]>({
     queryKey: ["/api/items", { search: query }],
     enabled: query.length > 0,
   });
@@ -50,7 +50,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item: any) => item.category).filter(Boolean)));
 
   return (
     <div className={`relative ${className}`}>
@@ -70,6 +70,7 @@ export default function SearchBar({
             size="sm"
             onClick={handleClear}
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
+            aria-label="Clear search"
           >
             <X size={14} />
           </Button>
@@ -99,7 +100,7 @@ export default function SearchBar({
                 <>
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
-                    {categories.slice(0, 4).map((category) => (
+                    {categories.slice(0, 4).map((category: any) => (
                       <Badge
                         key={category}
                         variant="secondary"
