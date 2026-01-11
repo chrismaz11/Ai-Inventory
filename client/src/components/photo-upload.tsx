@@ -232,7 +232,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-auto p-1 opacity-0 group-hover:opacity-100"
+                          className="h-auto p-1 opacity-0 group-hover:opacity-100 focus:opacity-100"
                           onClick={() => removeFile(index)}
                           disabled={analyzeMutation.isPending}
                           aria-label={`Remove ${file.name}`}
