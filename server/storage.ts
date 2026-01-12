@@ -207,23 +207,21 @@ export class DatabaseStorage implements IStorage {
     totalItems: number;
     lastActivity: Activity | null;
   }> {
-    const [storageUnitCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(storageUnits);
-
-    const [itemCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(items);
-
-    const [lastActivity] = await db
-      .select()
-      .from(activities)
-      .orderBy(desc(activities.createdAt))
-      .limit(1);
+    // ⚡ Bolt: Parallelize queries to improve performance
+    // Reduces latency from T1+T2+T3 to max(T1,T2,T3)
+    const [
+      [storageUnitCount],
+      [itemCount],
+      [lastActivity]
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(storageUnits),
+      db.select({ count: sql<number>`count(*)` }).from(items),
+      db.select().from(activities).orderBy(desc(activities.createdAt)).limit(1)
+    ]);
 
     return {
-      totalStorageUnits: storageUnitCount.count,
-      totalItems: itemCount.count,
+      totalStorageUnits: storageUnitCount?.count ?? 0,
+      totalItems: itemCount?.count ?? 0,
       lastActivity: lastActivity || null,
     };
   }
