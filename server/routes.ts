@@ -6,6 +6,7 @@ import { analyzeStoragePhoto, generateItemSummary } from "./services/openai";
 import { generateQRCode, validateQRCode, generateStorageUnitName } from "./services/qr";
 import multer from "multer";
 import { z } from "zod";
+import { rateLimit } from "./middleware/rateLimit";
 
 // Configure multer for photo uploads
 const upload = multer({
@@ -23,6 +24,14 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply rate limiting to all /api routes
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again after 15 minutes"
+  });
+
+  app.use("/api", apiLimiter);
   
   // Storage Units routes
   app.get("/api/storage-units", async (req, res) => {
