@@ -1,15 +1,42 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { debounce } from "lodash";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
+}
+
+// Custom debounce implementation to avoid lodash dependency
+function useDebounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
 }
 
 export default function SearchBar({ 
@@ -20,17 +47,14 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<any[]>({
     queryKey: ["/api/items", { search: query }],
     enabled: query.length > 0,
   });
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      onSearch(searchQuery);
-    }, 300),
-    [onSearch]
-  );
+  const debouncedSearch = useDebounce((searchQuery: string) => {
+    onSearch(searchQuery);
+  }, 300);
 
   const handleInputChange = (value: string) => {
     setQuery(value);
@@ -50,7 +74,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item: any) => item.category).filter(Boolean)));
 
   return (
     <div className={`relative ${className}`}>
@@ -99,7 +123,7 @@ export default function SearchBar({
                 <>
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
-                    {categories.slice(0, 4).map((category) => (
+                    {categories.slice(0, 4).map((category: any) => (
                       <Badge
                         key={category}
                         variant="secondary"
