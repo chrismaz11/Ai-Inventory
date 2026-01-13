@@ -15,11 +15,11 @@ export default function StorageUnits() {
   const [editingUnit, setEditingUnit] = useState<any>(null);
   const { toast } = useToast();
 
-  const { data: storageUnits = [], isLoading } = useQuery({
+  const { data: storageUnits = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [] } = useQuery<any[]>({
     queryKey: ["/api/items"],
   });
 

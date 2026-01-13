@@ -20,7 +20,7 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<any[]>({
     queryKey: ["/api/items", { search: query }],
     enabled: query.length > 0,
   });
@@ -50,7 +50,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item: any) => item.category).filter(Boolean)));
 
   return (
     <div className={`relative ${className}`}>
@@ -69,6 +69,7 @@ export default function SearchBar({
             variant="ghost"
             size="sm"
             onClick={handleClear}
+            aria-label="Clear search"
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
           >
             <X size={14} />
@@ -100,14 +101,14 @@ export default function SearchBar({
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 4).map((category) => (
-                      <Badge
+                      <button
                         key={category}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-slate-200 text-xs"
+                        type="button"
+                        className="inline-flex items-center rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         onClick={() => handleSuggestionClick(category)}
                       >
                         {category}
-                      </Badge>
+                      </button>
                     ))}
                   </div>
                 </>
