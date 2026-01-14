@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
   const [selectedStorageUnit, setSelectedStorageUnit] = useState<string>(storageUnitId?.toString() || "");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const { data: storageUnits = [] } = useQuery<any[]>({
@@ -84,7 +85,13 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
       });
     }
 
-    setSelectedFiles(validFiles);
+    // Append to existing files instead of replacing
+    setSelectedFiles(prev => [...prev, ...validFiles]);
+
+    // Reset input so the same file can be selected again if needed
+    if (event.target) {
+      event.target.value = '';
+    }
   };
 
   const handleDrop = (event: React.DragEvent<HTMLButtonElement>) => {
@@ -96,7 +103,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
       return isValidType && isValidSize;
     });
 
-    setSelectedFiles(validFiles);
+    setSelectedFiles(prev => [...prev, ...validFiles]);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLButtonElement>) => {
@@ -136,6 +143,10 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
 
   const removeFile = (index: number) => {
     setSelectedFiles(files => files.filter((_, i) => i !== index));
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -185,30 +196,29 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
           <div className="space-y-4">
             <Label>Upload Photos</Label>
             
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              disabled={analyzeMutation.isPending}
+            />
+
             {selectedFiles.length === 0 ? (
-              <>
-                <button
-                  type="button"
-                  className="w-full border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  onClick={() => document.getElementById('photo-input')?.click()}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  aria-label="Upload photos"
-                >
-                  <CloudUpload className="mx-auto mb-4 text-secondary" size={48} />
-                  <p className="text-slate-700 font-medium mb-2">Drop photos here or click to browse</p>
-                  <p className="text-sm text-secondary">Supports JPG, PNG, HEIC up to 10MB each</p>
-                </button>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  className="hidden" 
-                  id="photo-input"
-                  onChange={handleFileSelect}
-                  disabled={analyzeMutation.isPending}
-                />
-              </>
+              <button
+                type="button"
+                className="w-full border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                onClick={triggerFileInput}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                aria-label="Upload photos"
+              >
+                <CloudUpload className="mx-auto mb-4 text-secondary" size={48} />
+                <p className="text-slate-700 font-medium mb-2">Drop photos here or click to browse</p>
+                <p className="text-sm text-secondary">Supports JPG, PNG, HEIC up to 10MB each</p>
+              </button>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -232,7 +242,7 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-auto p-1 opacity-0 group-hover:opacity-100"
+                          className="h-auto p-1 opacity-0 focus:opacity-100 group-hover:opacity-100 transition-opacity"
                           onClick={() => removeFile(index)}
                           disabled={analyzeMutation.isPending}
                           aria-label={`Remove ${file.name}`}
@@ -247,21 +257,12 @@ export default function PhotoUpload({ open, onClose, storageUnitId }: PhotoUploa
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => document.getElementById('photo-input')?.click()}
+                  onClick={triggerFileInput}
                   disabled={analyzeMutation.isPending}
                   className="w-full"
                 >
                   Add More Photos
                 </Button>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  className="hidden" 
-                  id="photo-input"
-                  onChange={handleFileSelect}
-                  disabled={analyzeMutation.isPending}
-                />
               </div>
             )}
           </div>
