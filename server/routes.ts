@@ -6,6 +6,14 @@ import { analyzeStoragePhoto, generateItemSummary } from "./services/openai";
 import { generateQRCode, validateQRCode, generateStorageUnitName } from "./services/qr";
 import multer from "multer";
 import { z } from "zod";
+import { createRateLimiter } from "./middleware/rateLimit";
+
+// Rate limiter for photo analysis - 5 requests per hour per IP to prevent abuse/cost spikes
+const analysisLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: "Photo analysis limit reached. Please try again in an hour."
+});
 
 // Configure multer for photo uploads
 const upload = multer({
@@ -207,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Photo Analysis route
-  app.post("/api/analyze-photos", upload.array('photos', 10), async (req, res) => {
+  app.post("/api/analyze-photos", analysisLimiter, upload.array('photos', 10), async (req, res) => {
     try {
       const { storageUnitId } = req.body;
       const files = req.files as Express.Multer.File[];

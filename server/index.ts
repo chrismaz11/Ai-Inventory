@@ -1,10 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { createRateLimiter } from "./middleware/rateLimit";
 
 const app = express();
+app.set("trust proxy", 1); // Trust first proxy (required for correct IP in deployed envs)
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Rate limiter for API routes - 100 requests per 15 minutes
+const apiLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: "Too many requests from this IP, please try again after 15 minutes"
+});
+app.use("/api", apiLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
