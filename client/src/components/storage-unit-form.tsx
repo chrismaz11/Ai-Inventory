@@ -160,7 +160,7 @@ export default function StorageUnitForm({ open, onClose, storageUnit }: StorageU
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {isEditing ? "Edit Storage Unit" : "Create Storage Unit"}
-            <Button variant="ghost" size="sm" onClick={handleClose} disabled={isLoading}>
+            <Button variant="ghost" size="sm" onClick={handleClose} disabled={isLoading} aria-label="Close dialog">
               <X size={16} />
             </Button>
           </DialogTitle>
