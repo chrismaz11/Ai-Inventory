@@ -1,3 +1,3 @@
-## 2024-05-23 - Accessible File Drop Zones
-**Learning:** File drop zones implemented as `div`s with `onClick` are inaccessible to keyboard users.
-**Action:** Always wrap drop zones in a `<button type="button">` or use a `<label>` linked to the file input. Ensure visual styles (like `w-full`) are maintained when changing tags.
+## 2025-05-23 - Focus Opacity on Hidden Elements
+**Learning:** Interactive elements hidden via opacity (like "remove" buttons on hover) must include `focus:opacity-100`. Without this, keyboard users can tab to the element but can't see it, leading to a confusing experience.
+**Action:** Always pair `opacity-0 group-hover:opacity-100` with `focus:opacity-100` for interactive elements.
