@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, ArrowLeft, Filter, SortAsc } from "lucide-react";
 import { Link } from "wouter";
+import SearchBar from "@/components/search-bar";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,14 +53,11 @@ export default function Inventory() {
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Input 
-                type="text" 
+              <SearchBar
+                onSearch={setSearchQuery}
                 placeholder="Search items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="w-full"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
             </div>
             
             <div className="flex gap-2">

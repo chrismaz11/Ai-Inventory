@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { debounce } from "lodash";
@@ -20,7 +19,7 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<any[]>({
     queryKey: ["/api/items", { search: query }],
     enabled: query.length > 0,
   });
@@ -50,7 +49,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item: any) => item.category).filter(Boolean)));
 
   return (
     <div className={`relative ${className}`}>
@@ -70,6 +69,7 @@ export default function SearchBar({
             size="sm"
             onClick={handleClear}
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
+            aria-label="Clear search"
           >
             <X size={14} />
           </Button>
@@ -86,7 +86,7 @@ export default function SearchBar({
                 <button
                   key={item.id}
                   onClick={() => handleSuggestionClick(item.name)}
-                  className="w-full text-left p-2 hover:bg-slate-50 rounded text-sm"
+                  className="w-full text-left p-2 hover:bg-slate-50 rounded text-sm focus:outline-none focus:bg-slate-50 focus:ring-2 focus:ring-primary focus:ring-opacity-50"
                 >
                   <div className="font-medium">{item.name}</div>
                   {item.description && (
@@ -100,14 +100,13 @@ export default function SearchBar({
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 4).map((category) => (
-                      <Badge
+                      <button
                         key={category}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-slate-200 text-xs"
+                        className="inline-flex items-center rounded-full border border-transparent bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors cursor-pointer"
                         onClick={() => handleSuggestionClick(category)}
                       >
                         {category}
-                      </Badge>
+                      </button>
                     ))}
                   </div>
                 </>
