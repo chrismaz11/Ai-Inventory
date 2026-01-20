@@ -134,7 +134,7 @@ export default function QRScanner({ open, onClose, onSuccess }: QRScannerProps) 
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               QR Code Scanner
-              <Button variant="ghost" size="sm" onClick={handleClose}>
+              <Button variant="ghost" size="sm" onClick={handleClose} aria-label="Close">
                 <X size={16} />
               </Button>
             </DialogTitle>
@@ -176,7 +176,7 @@ export default function QRScanner({ open, onClose, onSuccess }: QRScannerProps) 
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Scan QR Code
-            <Button variant="ghost" size="sm" onClick={handleClose}>
+            <Button variant="ghost" size="sm" onClick={handleClose} aria-label="Close">
               <X size={16} />
             </Button>
           </DialogTitle>
