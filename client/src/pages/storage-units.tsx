@@ -9,17 +9,18 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import StorageUnitForm from "@/components/storage-unit-form";
 import { formatDistanceToNow } from "date-fns";
+import { Item, StorageUnit } from "@shared/schema";
 
 export default function StorageUnits() {
   const [showCreateUnit, setShowCreateUnit] = useState(false);
-  const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [editingUnit, setEditingUnit] = useState<StorageUnit | null>(null);
   const { toast } = useToast();
 
-  const { data: storageUnits = [], isLoading } = useQuery({
+  const { data: storageUnits = [], isLoading } = useQuery<StorageUnit[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [] } = useQuery<Item[]>({
     queryKey: ["/api/items"],
   });
 
@@ -45,10 +46,10 @@ export default function StorageUnits() {
   });
 
   const getItemCount = (unitId: number) => {
-    return items.filter((item: any) => item.storageUnitId === unitId).length;
+    return items.filter((item) => item.storageUnitId === unitId).length;
   };
 
-  const handleDelete = (unit: any) => {
+  const handleDelete = (unit: StorageUnit) => {
     if (confirm(`Are you sure you want to delete "${unit.name}"? This will also delete all items in this storage unit.`)) {
       deleteUnitMutation.mutate(unit.id);
     }
@@ -111,7 +112,7 @@ export default function StorageUnits() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {storageUnits.map((unit: any) => (
+            {storageUnits.map((unit) => (
               <Card key={unit.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
