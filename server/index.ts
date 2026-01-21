@@ -43,8 +43,13 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Don't leak stack traces or internal errors to client
+    const safeMessage = status === 500 ? "Internal Server Error" : message;
+
+    // Log the actual error for debugging
+    console.error("Server error:", err);
+
+    res.status(status).json({ message: safeMessage });
   });
 
   // importantly only setup vite in development and after
