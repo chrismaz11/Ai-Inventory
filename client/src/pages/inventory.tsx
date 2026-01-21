@@ -59,6 +59,7 @@ export default function Inventory() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
+                aria-label="Search items"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
             </div>
