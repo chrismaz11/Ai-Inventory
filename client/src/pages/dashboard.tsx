@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { 
   Search, 
@@ -93,9 +94,16 @@ export default function Dashboard() {
             </nav>
 
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" aria-label="Notifications">
-                <Bell size={18} />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" aria-label="Notifications">
+                    <Bell size={18} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View notifications</p>
+                </TooltipContent>
+              </Tooltip>
               <div className="w-8 h-8 bg-slate-300 rounded-full flex items-center justify-center">
                 <User size={14} className="text-slate-600" />
               </div>
@@ -286,6 +294,7 @@ export default function Dashboard() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
+                      aria-label="Search items and storage units"
                     />
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
                   </div>
