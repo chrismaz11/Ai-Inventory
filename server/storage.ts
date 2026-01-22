@@ -95,7 +95,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(storageUnits)
       .where(eq(storageUnits.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getItem(id: number): Promise<Item | undefined> {
@@ -175,7 +175,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(items)
       .where(eq(items.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getActivities(limit = 50): Promise<Activity[]> {
@@ -207,19 +207,16 @@ export class DatabaseStorage implements IStorage {
     totalItems: number;
     lastActivity: Activity | null;
   }> {
-    const [storageUnitCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(storageUnits);
-
-    const [itemCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(items);
-
-    const [lastActivity] = await db
-      .select()
-      .from(activities)
-      .orderBy(desc(activities.createdAt))
-      .limit(1);
+    // Execute queries concurrently to improve performance
+    const [
+      [storageUnitCount],
+      [itemCount],
+      [lastActivity]
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(storageUnits),
+      db.select({ count: sql<number>`count(*)` }).from(items),
+      db.select().from(activities).orderBy(desc(activities.createdAt)).limit(1)
+    ]);
 
     return {
       totalStorageUnits: storageUnitCount.count,
