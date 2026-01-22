@@ -95,7 +95,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(storageUnits)
       .where(eq(storageUnits.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getItem(id: number): Promise<Item | undefined> {
@@ -175,7 +175,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(items)
       .where(eq(items.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getActivities(limit = 50): Promise<Activity[]> {
