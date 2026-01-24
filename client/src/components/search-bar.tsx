@@ -1,15 +1,41 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import { Item } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
+}
+
+function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: number) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
 }
 
 export default function SearchBar({ 
@@ -20,17 +46,14 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<Item[]>({
     queryKey: ["/api/items", { search: query }],
     enabled: query.length > 0,
   });
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      onSearch(searchQuery);
-    }, 300),
-    [onSearch]
-  );
+  const debouncedSearch = useDebounce((searchQuery: string) => {
+    onSearch(searchQuery);
+  }, 300);
 
   const handleInputChange = (value: string) => {
     setQuery(value);
@@ -50,7 +73,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item) => item.category).filter(Boolean))) as string[];
 
   return (
     <div className={`relative ${className}`}>
@@ -58,6 +81,7 @@ export default function SearchBar({
         <Input 
           type="text" 
           placeholder={placeholder}
+          aria-label="Search items"
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setShowSuggestions(query.length > 0)}
@@ -69,6 +93,7 @@ export default function SearchBar({
             variant="ghost"
             size="sm"
             onClick={handleClear}
+            aria-label="Clear search"
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
           >
             <X size={14} />
@@ -82,7 +107,7 @@ export default function SearchBar({
           {searchResults.length > 0 ? (
             <div className="p-2">
               <div className="text-xs font-medium text-slate-500 mb-2">Items</div>
-              {searchResults.slice(0, 5).map((item: any) => (
+              {searchResults.slice(0, 5).map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleSuggestionClick(item.name)}
@@ -100,14 +125,13 @@ export default function SearchBar({
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 4).map((category) => (
-                      <Badge
+                      <button
                         key={category}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-slate-200 text-xs"
+                        className={cn(badgeVariants({ variant: "secondary" }), "cursor-pointer hover:bg-slate-200 text-xs")}
                         onClick={() => handleSuggestionClick(category)}
                       >
                         {category}
-                      </Badge>
+                      </button>
                     ))}
                   </div>
                 </>
