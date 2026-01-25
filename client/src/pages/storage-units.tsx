@@ -9,17 +9,28 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import StorageUnitForm from "@/components/storage-unit-form";
 import { formatDistanceToNow } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function StorageUnits() {
   const [showCreateUnit, setShowCreateUnit] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [unitToDelete, setUnitToDelete] = useState<any>(null);
   const { toast } = useToast();
 
-  const { data: storageUnits = [], isLoading } = useQuery({
+  const { data: storageUnits = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [] } = useQuery<any[]>({
     queryKey: ["/api/items"],
   });
 
@@ -49,9 +60,7 @@ export default function StorageUnits() {
   };
 
   const handleDelete = (unit: any) => {
-    if (confirm(`Are you sure you want to delete "${unit.name}"? This will also delete all items in this storage unit.`)) {
-      deleteUnitMutation.mutate(unit.id);
-    }
+    setUnitToDelete(unit);
   };
 
   return (
@@ -176,6 +185,7 @@ export default function StorageUnits() {
                       size="sm" 
                       onClick={() => handleDelete(unit)}
                       disabled={deleteUnitMutation.isPending}
+                      aria-label={`Delete ${unit.name}`}
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -210,6 +220,31 @@ export default function StorageUnits() {
           storageUnit={editingUnit}
         />
       )}
+
+      <AlertDialog open={!!unitToDelete} onOpenChange={(open) => !open && setUnitToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the storage unit "{unitToDelete?.name}" and all items associated with it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (unitToDelete) {
+                  deleteUnitMutation.mutate(unitToDelete.id);
+                  setUnitToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
