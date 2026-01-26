@@ -1,15 +1,26 @@
 import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
+}
+
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }
 
 export default function SearchBar({ 
@@ -21,7 +32,7 @@ export default function SearchBar({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { data: searchResults = [] } = useQuery({
-    queryKey: ["/api/items", { search: query }],
+    queryKey: [`/api/items?search=${encodeURIComponent(query)}`],
     enabled: query.length > 0,
   });
 
@@ -50,7 +61,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set((searchResults as any[]).map((item: any) => item.category).filter(Boolean)));
 
   return (
     <div className={`relative ${className}`}>
@@ -62,14 +73,23 @@ export default function SearchBar({
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setShowSuggestions(query.length > 0)}
           className="pl-10 pr-10"
+          role="combobox"
+          aria-expanded={showSuggestions}
+          aria-controls="search-suggestions"
+          aria-label={placeholder}
         />
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
+        <Search
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary"
+          size={16}
+          aria-hidden="true"
+        />
         {query && (
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClear}
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
+            aria-label="Clear search"
           >
             <X size={14} />
           </Button>
@@ -78,11 +98,14 @@ export default function SearchBar({
 
       {/* Search Suggestions */}
       {showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-          {searchResults.length > 0 ? (
+        <div
+          id="search-suggestions"
+          className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+        >
+          {(searchResults as any[]).length > 0 ? (
             <div className="p-2">
               <div className="text-xs font-medium text-slate-500 mb-2">Items</div>
-              {searchResults.slice(0, 5).map((item: any) => (
+              {(searchResults as any[]).slice(0, 5).map((item: any) => (
                 <button
                   key={item.id}
                   onClick={() => handleSuggestionClick(item.name)}
@@ -100,14 +123,16 @@ export default function SearchBar({
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 4).map((category) => (
-                      <Badge
-                        key={category}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-slate-200 text-xs"
-                        onClick={() => handleSuggestionClick(category)}
+                      <button
+                        key={category as string}
+                        className={cn(
+                          badgeVariants({ variant: "secondary" }),
+                          "cursor-pointer hover:bg-slate-200 text-xs"
+                        )}
+                        onClick={() => handleSuggestionClick(category as string)}
                       >
-                        {category}
-                      </Badge>
+                        {category as string}
+                      </button>
                     ))}
                   </div>
                 </>
