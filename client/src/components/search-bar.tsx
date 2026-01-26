@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import { useDebounce } from "@/hooks/use-debounce";
+import { type Item } from "@shared/schema";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -19,38 +20,33 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const debouncedQuery = useDebounce(query, 300);
 
-  const { data: searchResults = [] } = useQuery({
-    queryKey: ["/api/items", { search: query }],
-    enabled: query.length > 0,
+  useEffect(() => {
+    onSearch(debouncedQuery);
+  }, [debouncedQuery, onSearch]);
+
+  const { data: searchResults = [] } = useQuery<Item[]>({
+    queryKey: ["/api/items", { search: debouncedQuery }],
+    enabled: debouncedQuery.length > 0,
   });
-
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      onSearch(searchQuery);
-    }, 300),
-    [onSearch]
-  );
 
   const handleInputChange = (value: string) => {
     setQuery(value);
-    debouncedSearch(value);
     setShowSuggestions(value.length > 0);
   };
 
   const handleClear = () => {
     setQuery("");
     setShowSuggestions(false);
-    onSearch("");
   };
 
   const handleSuggestionClick = (itemName: string) => {
     setQuery(itemName);
     setShowSuggestions(false);
-    onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item) => item.category).filter(Boolean))) as string[];
 
   return (
     <div className={`relative ${className}`}>
@@ -82,7 +78,7 @@ export default function SearchBar({
           {searchResults.length > 0 ? (
             <div className="p-2">
               <div className="text-xs font-medium text-slate-500 mb-2">Items</div>
-              {searchResults.slice(0, 5).map((item: any) => (
+              {searchResults.slice(0, 5).map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleSuggestionClick(item.name)}
