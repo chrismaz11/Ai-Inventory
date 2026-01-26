@@ -6,27 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, ArrowLeft, Filter, SortAsc } from "lucide-react";
 import { Link } from "wouter";
+import { type Item, type StorageUnit } from "@shared/schema";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: items = [], isLoading } = useQuery<Item[]>({
     queryKey: ["/api/items", { search: searchQuery }],
   });
 
-  const { data: storageUnits = [] } = useQuery({
+  const { data: storageUnits = [] } = useQuery<StorageUnit[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const categories = [...new Set(items.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(items.map((item) => item.category).filter(Boolean))) as string[];
 
-  const filteredItems = items.filter((item: any) => 
+  const filteredItems = items.filter((item) =>
     !selectedCategory || item.category === selectedCategory
   );
 
   const getStorageUnitName = (storageUnitId: number) => {
-    const unit = storageUnits.find((u: any) => u.id === storageUnitId);
+    const unit = storageUnits.find((u) => u.id === storageUnitId);
     return unit?.name || `Unit #${storageUnitId}`;
   };
 
@@ -126,7 +127,7 @@ export default function Inventory() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map((item: any) => (
+            {filteredItems.map((item) => (
               <Card key={item.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
