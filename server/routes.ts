@@ -229,19 +229,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update storage unit status to "updating"
       await storage.updateStorageUnit(unitId, { status: "updating" });
       
-      let allAnalyzedItems: any[] = [];
-      
-      // Analyze each photo
-      for (const file of files) {
-        const base64Image = file.buffer.toString('base64');
-        try {
-          const analyzedItems = await analyzeStoragePhoto(base64Image);
-          allAnalyzedItems.push(...analyzedItems);
-        } catch (error) {
-          console.error("Failed to analyze photo:", error);
-          // Continue with other photos even if one fails
-        }
-      }
+      // Analyze each photo concurrently
+      // Optimization: Process all photos in parallel to reduce total latency
+      const analyzedResults = await Promise.all(
+        files.map(async (file) => {
+          const base64Image = file.buffer.toString('base64');
+          try {
+            return await analyzeStoragePhoto(base64Image);
+          } catch (error) {
+            console.error("Failed to analyze photo:", error);
+            // Return empty array to continue with other photos even if one fails
+            return [];
+          }
+        })
+      );
+
+      const allAnalyzedItems = analyzedResults.flat();
       
       if (allAnalyzedItems.length === 0) {
         await storage.updateStorageUnit(unitId, { status: "active" });
