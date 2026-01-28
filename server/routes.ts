@@ -231,17 +231,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let allAnalyzedItems: any[] = [];
       
-      // Analyze each photo
-      for (const file of files) {
+      // Analyze photos in parallel
+      const analysisPromises = files.map(async (file) => {
         const base64Image = file.buffer.toString('base64');
         try {
-          const analyzedItems = await analyzeStoragePhoto(base64Image);
-          allAnalyzedItems.push(...analyzedItems);
+          return await analyzeStoragePhoto(base64Image);
         } catch (error) {
           console.error("Failed to analyze photo:", error);
-          // Continue with other photos even if one fails
+          return [];
         }
-      }
+      });
+
+      const results = await Promise.all(analysisPromises);
+      allAnalyzedItems = results.flat();
       
       if (allAnalyzedItems.length === 0) {
         await storage.updateStorageUnit(unitId, { status: "active" });
