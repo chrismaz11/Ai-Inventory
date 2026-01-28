@@ -12,7 +12,7 @@ import QRScanner from "@/components/qr-scanner";
 import PhotoUpload from "@/components/photo-upload";
 
 function Router() {
-  const [showQRScanner, setShowQRScanner] = useState(true);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [selectedStorageUnitId, setSelectedStorageUnitId] = useState<number | undefined>();
 
