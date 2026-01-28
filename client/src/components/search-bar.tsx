@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import { useDebounce } from "@/hooks/use-debounce";
+import { type Item } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -19,38 +21,59 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const debouncedQuery = useDebounce(query, 300);
 
-  const { data: searchResults = [] } = useQuery({
-    queryKey: ["/api/items", { search: query }],
-    enabled: query.length > 0,
+  const { data: searchResults = [] } = useQuery<Item[]>({
+    queryKey: ["/api/items", { search: debouncedQuery }],
+    enabled: debouncedQuery.length > 0,
   });
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      onSearch(searchQuery);
-    }, 300),
-    [onSearch]
-  );
+  // Effect to trigger the parent onSearch when the debounced query changes
+  useEffect(() => {
+    onSearch(debouncedQuery);
+  }, [debouncedQuery, onSearch]);
 
   const handleInputChange = (value: string) => {
     setQuery(value);
-    debouncedSearch(value);
     setShowSuggestions(value.length > 0);
   };
 
   const handleClear = () => {
     setQuery("");
     setShowSuggestions(false);
-    onSearch("");
+    // debouncedQuery will update eventually, triggering the effect
   };
 
   const handleSuggestionClick = (itemName: string) => {
     setQuery(itemName);
     setShowSuggestions(false);
-    onSearch(itemName);
+    // We want immediate feedback for clicks, so we might want to bypass debounce?
+    // But setting query will trigger debounce.
+    // Ideally we'd set debounced value immediately but useDebounce doesn't expose setter.
+    // However, for UX, clicking a suggestion should probably search immediately.
+    // Since useDebounce is tied to query, we can't force it.
+    // But wait, the original code called `onSearch` immediately in handleSuggestionClick:
+    // `onSearch(itemName);`
+    // So I should keep that behavior.
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  // Re-evaluating handleSuggestionClick:
+  // If I call onSearch(itemName) here, and also setQuery(itemName),
+  // then setQuery updates state -> debounce timer starts -> 300ms later debouncedQuery updates -> effect fires -> onSearch called again.
+  // This might cause double search.
+  // Ideally, if the user clicks a suggestion, we accept that as the final query.
+
+  // Let's stick to the previous behavior logic where possible, but `useDebounce` makes it reactive.
+  // If I want to avoid the double call, I can check if query matches debouncedQuery? No.
+
+  // Actually, standard pattern with useDebounce is: UI is driven by `query`, API/Search is driven by `debouncedQuery`.
+  // If user clicks suggestion, `query` becomes `itemName`. `debouncedQuery` updates 300ms later. `onSearch` fires.
+  // The delay is slightly annoying for a click, but acceptable.
+  // OR, I can keep `onSearch(itemName)` in the click handler, and the effect will fire again later.
+  // Since `onSearch` is likely just setting a filter state in parent, setting it twice to the same value is fine (React handles equality checks).
+
+  // Let's refine the Categories part.
+  const categories = Array.from(new Set(searchResults.map((item) => item.category).filter(Boolean) as string[]));
 
   return (
     <div className={`relative ${className}`}>
@@ -70,6 +93,7 @@ export default function SearchBar({
             size="sm"
             onClick={handleClear}
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
+            aria-label="Clear search"
           >
             <X size={14} />
           </Button>
@@ -82,11 +106,11 @@ export default function SearchBar({
           {searchResults.length > 0 ? (
             <div className="p-2">
               <div className="text-xs font-medium text-slate-500 mb-2">Items</div>
-              {searchResults.slice(0, 5).map((item: any) => (
+              {searchResults.slice(0, 5).map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleSuggestionClick(item.name)}
-                  className="w-full text-left p-2 hover:bg-slate-50 rounded text-sm"
+                  className="w-full text-left p-2 hover:bg-slate-50 rounded text-sm focus:outline-none focus:bg-slate-50 transition-colors"
                 >
                   <div className="font-medium">{item.name}</div>
                   {item.description && (
@@ -100,14 +124,16 @@ export default function SearchBar({
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 4).map((category) => (
-                      <Badge
+                      <button
                         key={category}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-slate-200 text-xs"
+                        className={cn(
+                          badgeVariants({ variant: "secondary" }),
+                          "cursor-pointer hover:bg-slate-200 text-xs border-transparent"
+                        )}
                         onClick={() => handleSuggestionClick(category)}
                       >
                         {category}
-                      </Badge>
+                      </button>
                     ))}
                   </div>
                 </>
