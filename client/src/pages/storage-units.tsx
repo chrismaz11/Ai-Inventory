@@ -9,17 +9,18 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import StorageUnitForm from "@/components/storage-unit-form";
 import { formatDistanceToNow } from "date-fns";
+import type { Item, StorageUnit } from "@shared/schema";
 
 export default function StorageUnits() {
   const [showCreateUnit, setShowCreateUnit] = useState(false);
-  const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [editingUnit, setEditingUnit] = useState<StorageUnit | null>(null);
   const { toast } = useToast();
 
-  const { data: storageUnits = [], isLoading } = useQuery({
+  const { data: storageUnits = [], isLoading } = useQuery<StorageUnit[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const { data: items = [] } = useQuery({
+  const { data: items = [] } = useQuery<Item[]>({
     queryKey: ["/api/items"],
   });
 
