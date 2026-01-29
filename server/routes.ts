@@ -6,6 +6,7 @@ import { analyzeStoragePhoto, generateItemSummary } from "./services/openai";
 import { generateQRCode, validateQRCode, generateStorageUnitName } from "./services/qr";
 import multer from "multer";
 import { z } from "zod";
+import { parsePositiveInt } from "./utils";
 
 // Configure multer for photo uploads
 const upload = multer({
@@ -36,8 +37,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/storage-units/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id) || id < 1) {
+      const id = parsePositiveInt(req.params.id);
+      if (!id) {
         return res.status(400).json({ message: "Invalid storage unit ID" });
       }
 
@@ -102,8 +103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/storage-units/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id) || id < 1) {
+      const id = parsePositiveInt(req.params.id);
+      if (!id) {
         return res.status(400).json({ message: "Invalid storage unit ID" });
       }
 
@@ -125,8 +126,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/storage-units/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id) || id < 1) {
+      const id = parsePositiveInt(req.params.id);
+      if (!id) {
         return res.status(400).json({ message: "Invalid storage unit ID" });
       }
 
@@ -149,8 +150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (search) {
         items = await storage.searchItems(search as string);
       } else if (storageUnitId) {
-        const unitId = parseInt(storageUnitId as string);
-        if (isNaN(unitId) || unitId < 1) {
+        const unitId = parsePositiveInt(storageUnitId as string);
+        if (!unitId) {
           return res.status(400).json({ message: "Invalid storage unit ID" });
         }
         items = await storage.getItemsByStorageUnit(unitId);
@@ -166,8 +167,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/items/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id) || id < 1) {
+      const id = parsePositiveInt(req.params.id);
+      if (!id) {
         return res.status(400).json({ message: "Invalid item ID" });
       }
 
@@ -196,8 +197,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/items/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id) || id < 1) {
+      const id = parsePositiveInt(req.params.id);
+      if (!id) {
         return res.status(400).json({ message: "Invalid item ID" });
       }
 
@@ -219,8 +220,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/items/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id) || id < 1) {
+      const id = parsePositiveInt(req.params.id);
+      if (!id) {
         return res.status(400).json({ message: "Invalid item ID" });
       }
 
@@ -248,8 +249,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Storage unit ID is required" });
       }
       
-      const unitId = parseInt(storageUnitId);
-      if (isNaN(unitId) || unitId < 1) {
+      const unitId = parsePositiveInt(storageUnitId);
+      if (!unitId) {
         return res.status(400).json({ message: "Invalid storage unit ID" });
       }
 
@@ -333,15 +334,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let activities;
       if (storageUnitId) {
-        const unitId = parseInt(storageUnitId as string);
-        if (isNaN(unitId) || unitId < 1) {
+        const unitId = parsePositiveInt(storageUnitId as string);
+        if (!unitId) {
           return res.status(400).json({ message: "Invalid storage unit ID" });
         }
         activities = await storage.getActivitiesByStorageUnit(unitId);
       } else {
-        const limitVal = limit ? parseInt(limit as string) : 50;
+        const parsedLimit = parsePositiveInt(limit as string);
         // Validate limit: ensure it's a number, positive, and max 100
-        const safeLimit = (isNaN(limitVal) || limitVal < 1) ? 50 : Math.min(limitVal, 100);
+        const safeLimit = parsedLimit ? Math.min(parsedLimit, 100) : 50;
 
         activities = await storage.getActivities(safeLimit);
       }
