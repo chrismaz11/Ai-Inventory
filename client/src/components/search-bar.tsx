@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { debounce } from "lodash";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -19,22 +20,19 @@ export default function SearchBar({
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const debouncedQuery = useDebounce(query, 300);
 
-  const { data: searchResults = [] } = useQuery({
-    queryKey: ["/api/items", { search: query }],
-    enabled: query.length > 0,
+  const { data: searchResults = [] } = useQuery<any[]>({
+    queryKey: ["/api/items", { search: debouncedQuery }],
+    enabled: debouncedQuery.length > 0,
   });
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      onSearch(searchQuery);
-    }, 300),
-    [onSearch]
-  );
+  useEffect(() => {
+    onSearch(debouncedQuery);
+  }, [debouncedQuery, onSearch]);
 
   const handleInputChange = (value: string) => {
     setQuery(value);
-    debouncedSearch(value);
     setShowSuggestions(value.length > 0);
   };
 
@@ -50,7 +48,7 @@ export default function SearchBar({
     onSearch(itemName);
   };
 
-  const categories = [...new Set(searchResults.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(searchResults.map((item: any) => item.category).filter(Boolean)));
 
   return (
     <div className={`relative ${className}`}>
@@ -70,6 +68,7 @@ export default function SearchBar({
             size="sm"
             onClick={handleClear}
             className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
+            aria-label="Clear search"
           >
             <X size={14} />
           </Button>
@@ -100,14 +99,17 @@ export default function SearchBar({
                   <div className="text-xs font-medium text-slate-500 mt-3 mb-2">Categories</div>
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 4).map((category) => (
-                      <Badge
-                        key={category}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-slate-200 text-xs"
-                        onClick={() => handleSuggestionClick(category)}
+                      <button
+                        key={category as string}
+                        type="button"
+                        className={cn(
+                          badgeVariants({ variant: "secondary" }),
+                          "cursor-pointer hover:bg-slate-200 text-xs"
+                        )}
+                        onClick={() => handleSuggestionClick(category as string)}
                       >
-                        {category}
-                      </Badge>
+                        {category as string}
+                      </button>
                     ))}
                   </div>
                 </>

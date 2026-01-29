@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, ArrowLeft, Filter, SortAsc } from "lucide-react";
 import { Link } from "wouter";
+import SearchBar from "@/components/search-bar";
 
 export default function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: items = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/items", { search: searchQuery }],
   });
 
-  const { data: storageUnits = [] } = useQuery({
+  const { data: storageUnits = [] } = useQuery<any[]>({
     queryKey: ["/api/storage-units"],
   });
 
-  const categories = [...new Set(items.map((item: any) => item.category).filter(Boolean))];
+  const categories = Array.from(new Set(items.map((item: any) => item.category).filter(Boolean)));
 
   const filteredItems = items.filter((item: any) => 
     !selectedCategory || item.category === selectedCategory
@@ -52,15 +52,11 @@ export default function Inventory() {
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Input 
-                type="text" 
+            <div className="flex-1">
+              <SearchBar
+                onSearch={setSearchQuery}
                 placeholder="Search items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
             </div>
             
             <div className="flex gap-2">
