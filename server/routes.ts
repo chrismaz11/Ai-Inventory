@@ -37,6 +37,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/storage-units/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
       const unit = await storage.getStorageUnit(id);
       if (!unit) {
         return res.status(404).json({ message: "Storage unit not found" });
@@ -99,6 +102,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/storage-units/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
       const data = insertStorageUnitSchema.partial().parse(req.body);
       
       const unit = await storage.updateStorageUnit(id, data);
@@ -118,6 +124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/storage-units/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
       const success = await storage.deleteStorageUnit(id);
       if (!success) {
         return res.status(404).json({ message: "Storage unit not found" });
@@ -137,7 +146,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (search) {
         items = await storage.searchItems(search as string);
       } else if (storageUnitId) {
-        items = await storage.getItemsByStorageUnit(parseInt(storageUnitId as string));
+        const unitId = parseInt(storageUnitId as string);
+        if (isNaN(unitId)) {
+          return res.status(400).json({ message: "Invalid storage unit ID" });
+        }
+        items = await storage.getItemsByStorageUnit(unitId);
       } else {
         items = await storage.getItems();
       }
@@ -151,6 +164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/items/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
       const item = await storage.getItem(id);
       if (!item) {
         return res.status(404).json({ message: "Item not found" });
@@ -177,6 +193,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/items/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
       const data = insertItemSchema.partial().parse(req.body);
       
       const item = await storage.updateItem(id, data);
@@ -196,6 +215,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/items/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
       const success = await storage.deleteItem(id);
       if (!success) {
         return res.status(404).json({ message: "Item not found" });
@@ -221,6 +243,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const unitId = parseInt(storageUnitId);
+      if (isNaN(unitId)) {
+        return res.status(400).json({ message: "Invalid storage unit ID" });
+      }
       const unit = await storage.getStorageUnit(unitId);
       if (!unit) {
         return res.status(404).json({ message: "Storage unit not found" });
@@ -289,8 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Photo analysis error:", error);
       res.status(500).json({ 
-        message: "Failed to analyze photos", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+        message: "Failed to analyze photos"
       });
     }
   });
@@ -302,9 +326,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let activities;
       if (storageUnitId) {
-        activities = await storage.getActivitiesByStorageUnit(parseInt(storageUnitId as string));
+        const unitId = parseInt(storageUnitId as string);
+        if (isNaN(unitId)) {
+          return res.status(400).json({ message: "Invalid storage unit ID" });
+        }
+        activities = await storage.getActivitiesByStorageUnit(unitId);
       } else {
-        activities = await storage.getActivities(limit ? parseInt(limit as string) : undefined);
+        let parsedLimit = undefined;
+        if (limit) {
+          parsedLimit = parseInt(limit as string);
+          if (isNaN(parsedLimit)) {
+             return res.status(400).json({ message: "Invalid limit" });
+          }
+        }
+        activities = await storage.getActivities(parsedLimit);
       }
       
       res.json(activities);
